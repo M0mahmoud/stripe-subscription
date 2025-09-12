@@ -1,34 +1,34 @@
-import { db } from "@/lib/db"
-import { stripe, STRIPE_PRICE_IDS } from "@/lib/stripe"
-import { NextRequest, NextResponse } from "next/server"
-import Stripe from "stripe"
+import { db } from "@/lib/db";
+import { stripe, STRIPE_PRICE_IDS } from "@/lib/stripe";
+import { NextRequest, NextResponse } from "next/server";
+import Stripe from "stripe";
 
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
+const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
 export async function POST(request: NextRequest) {
-  const body = await request.text()
-  const signature = request.headers.get("stripe-signature")!
+  const body = await request.text();
+  const signature = request.headers.get("stripe-signature")!;
 
-  let event: Stripe.Event
+  let event: Stripe.Event;
 
   try {
-    event = stripe.webhooks.constructEvent(body, signature, webhookSecret)
+    event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
   } catch (error) {
-    console.error("Webhook signature verification failed: ", error)
-    return NextResponse.json({ error: "Invalid Signature" }, { status: 400 })
+    console.error("Webhook signature verification failed: ", error);
+    return NextResponse.json({ error: "Invalid Signature" }, { status: 400 });
   }
 
   try {
     switch (event.type) {
       case "checkout.session.completed": {
-        const session = event.data.object as Stripe.Checkout.Session
-        const userId = session.metadata?.userId
-        const priceId = session.metadata?.priceId
+        const session = event.data.object as Stripe.Checkout.Session;
+        const userId = session.metadata?.userId;
+        const priceId = session.metadata?.priceId;
 
         if (userId && priceId) {
           const subscription = await stripe.subscriptions.retrieve(
             session.subscription as string
-          )
+          );
 
           await db.user.update({
             where: { id: userId },
@@ -40,29 +40,29 @@ export async function POST(request: NextRequest) {
               ),
               plan: priceId === "premium" ? "premium" : "pro",
             },
-          })
+          });
         }
-        break
+        break;
       }
       case "customer.subscription.updated": {
-        const subscription = event.data.object as Stripe.Subscription
-        const customerId = subscription.customer as string
+        const subscription = event.data.object as Stripe.Subscription;
+        const customerId = subscription.customer as string;
 
         const user = await db.user.findFirst({
           where: { stripeCustomerId: customerId },
-        })
+        });
 
         if (user) {
           // Get the current price ID from the subscription
-          const currentPriceId = subscription.items.data[0]?.price?.id
-          let planType: "free" | "premium" | "pro" = "free"
-          
+          const currentPriceId = subscription.items.data[0]?.price?.id;
+          let planType: "free" | "premium" | "pro" = "free";
+
           if (subscription.status === "active" && currentPriceId) {
             // Map price ID to plan type dynamically
             const priceIdMap = Object.entries(STRIPE_PRICE_IDS).find(
               ([, priceId]) => priceId === currentPriceId
-            )
-            planType = (priceIdMap?.[0] as "premium" | "pro") || "free"
+            );
+            planType = (priceIdMap?.[0] as "premium" | "pro") || "free";
           }
 
           await db.user.update({
@@ -73,34 +73,34 @@ export async function POST(request: NextRequest) {
               ),
               plan: planType,
             },
-          })
+          });
         }
-        break
+        break;
       }
 
       case "invoice.payment_failed": {
-        const invoice = event.data.object as Stripe.Invoice
-        const customerId = invoice.customer as string
+        const invoice = event.data.object as Stripe.Invoice;
+        const customerId = invoice.customer as string;
 
         const user = await db.user.findFirst({
           where: { stripeCustomerId: customerId },
-        })
+        });
 
         if (user) {
           // You might want to send an email notification here
-          console.log(`Payment failed for user ${user.id}`)
+          console.log(`Payment failed for user ${user.id}`);
           // Optionally update user status or send notification
         }
-        break
+        break;
       }
 
       case "customer.subscription.deleted": {
-        const subscription = event.data.object as Stripe.Subscription
-        const customerId = subscription.customer as string
+        const subscription = event.data.object as Stripe.Subscription;
+        const customerId = subscription.customer as string;
 
         const user = await db.user.findFirst({
           where: { stripeCustomerId: customerId },
-        })
+        });
 
         if (user) {
           await db.user.update({
@@ -111,18 +111,18 @@ export async function POST(request: NextRequest) {
               stripeCurrentPeriodEnd: null,
               plan: "free",
             },
-          })
+          });
         }
-        break
+        break;
       }
       default:
-        console.log(`Unhandled event type: ${event.type}`)
+        console.log(`Unhandled event type: ${event.type}`);
     }
   } catch (error) {
-    console.error("Error processing webhook: ", error)
+    console.error("Error processing webhook: ", error);
     return NextResponse.json(
       { error: "Error processing webhook" },
       { status: 500 }
-    )
+    );
   }
 }

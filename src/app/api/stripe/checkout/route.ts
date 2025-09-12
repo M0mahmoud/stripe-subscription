@@ -1,38 +1,38 @@
-import { getSession } from "@/lib/auth"
-import { db } from "@/lib/db"
-import { stripe, STRIPE_PRICE_IDS } from "@/lib/stripe"
-import { NextRequest, NextResponse } from "next/server"
+import { getSession } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { stripe, STRIPE_PRICE_IDS } from "@/lib/stripe";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
   try {
     // Validate required environment variables
     if (!process.env.NEXT_PUBLIC_APP_URL) {
-      console.error("NEXT_PUBLIC_APP_URL is not set")
+      console.error("NEXT_PUBLIC_APP_URL is not set");
       return NextResponse.json(
         { error: "Server configuration error" },
         { status: 500 }
-      )
+      );
     }
 
-    const session = await getSession()
+    const session = await getSession();
 
     if (!session || !session.isLoggedIn || !session.userId) {
       return NextResponse.json(
         { error: "User is not logged in" },
         { status: 401 }
-      )
+      );
     }
 
-    const { priceId } = await request.json()
+    const { priceId } = await request.json();
 
     if (!priceId || !(priceId in STRIPE_PRICE_IDS)) {
-      return NextResponse.json({ error: "Invalid price ID" }, { status: 400 })
+      return NextResponse.json({ error: "Invalid price ID" }, { status: 400 });
     }
 
-    const user = await db.user.findUnique({ where: { id: session.userId } })
+    const user = await db.user.findUnique({ where: { id: session.userId } });
 
     if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 })
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     // Check if user already has an active subscription
@@ -40,24 +40,31 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "User already has an active subscription" },
         { status: 400 }
-      )
+      );
     }
 
-    let customerId = user.stripeCustomerId
+    let customerId = user.stripeCustomerId;
 
     if (!customerId) {
       const customer = await stripe.customers.create({
         email: user.email,
+        name: user.email.split("@")[0], // Use email prefix as name if no name available
         metadata: {
           userId: user.id,
         },
-      })
-      customerId = customer.id
+        // Ensure customer can receive emails
+        preferred_locales: ["en"],
+        // Enable tax ID collection if needed
+        address: {
+          country: "US", // Default country - you may want to make this configurable
+        },
+      });
+      customerId = customer.id;
 
       await db.user.update({
         where: { id: user.id },
         data: { stripeCustomerId: customerId },
-      })
+      });
     }
 
     const checkoutSession = await stripe.checkout.sessions.create({
@@ -78,16 +85,32 @@ export async function POST(request: NextRequest) {
       },
       subscription_data: {
         trial_period_days: 5,
-      }
-    })
-    console.log(checkoutSession.url)
+        metadata: {
+          userId: user.id,
+        },
+      },
+      // Enable automatic invoice collection and email sending
+      invoice_creation: {
+        enabled: true,
+        invoice_data: {
+          metadata: {
+            userId: user.id,
+          },
+        },
+      },
+      // Configure customer update to ensure email preferences
+      customer_update: {
+        address: "auto",
+        name: "auto",
+      },
+    });
 
-    return NextResponse.json({ url: checkoutSession.url })
+    return NextResponse.json({ url: checkoutSession.url });
   } catch (error) {
-    console.error("Error creating checkout session: ", error)
+    console.error("Error creating checkout session: ", error);
     return NextResponse.json(
       { error: "Failed to create checkout session" },
       { status: 500 }
-    )
+    );
   }
 }
