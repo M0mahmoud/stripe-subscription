@@ -1,39 +1,38 @@
-import { getSession } from "@/lib/auth"
-import { db } from "@/lib/db"
-import { redirect } from "next/navigation"
-import React from "react"
-import SignOutButton from "../components/SignOutButton"
-import ManageSubscriptionButton from "../components/ManageSubscriptionButton"
+import { getSession } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { redirect } from "next/navigation";
+import React from "react";
+import SignOutButton from "../components/SignOutButton";
+import ManageSubscriptionButton from "../components/ManageSubscriptionButton";
 
-const page = async () => {
-  const session = await getSession()
+const Page = async () => {
+  const session = await getSession();
 
   if (!session || !session.isLoggedIn) {
-    redirect("/signin")
+    redirect("/signin");
   }
 
-  const user = await db.user.findUnique({ where: { id: session.userId } })
+  const user = await db.user.findUnique({ where: { id: session.userId } });
 
   if (!user) {
-    redirect("/signin")
+    redirect("/signin");
   }
 
   const formatDate = (date: Date | null) => {
-    if (!date) return "N/A"
-    return new Date(date).toLocaleDateString()
-  }
+    if (!date) return "N/A";
+    return new Date(date).toLocaleDateString();
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 p-20">
-      <div className="flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
-            Welcome to your Dashboard!
-          </h2>
-          <div className="bg-white p-6 rounded-lg shadow-sm border">
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              User Information
-            </h3>
-            <div className="space-y-2 text-sm text-gray-600">
+    <div className="min-h-screen bg-gray-900 text-white p-4 sm:p-8">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-4xl font-bold mb-8 text-center">Your Dashboard</h1>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* User Information Card */}
+          <div className="bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-700">
+            <h2 className="text-2xl font-semibold mb-4">User Information</h2>
+            <div className="space-y-3 text-gray-300">
               <p>
                 <strong>ID:</strong> {user.id}
               </p>
@@ -43,24 +42,27 @@ const page = async () => {
               <p>
                 <strong>Role:</strong> {user.role}
               </p>
-              <SignOutButton />
+              <div className="mt-4">
+                <SignOutButton />
+              </div>
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-lg shadow-sm border mt-8">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">
+          {/* Subscription Information Card */}
+          <div className="bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-700">
+            <h2 className="text-2xl font-semibold mb-4">
               Subscription Information
-            </h3>
-            <div className="space-y-2 text-sm text-gray-600">
+            </h2>
+            <div className="space-y-3 text-gray-300">
               <p>
                 <strong>Current Plan:</strong>
                 <span
-                  className={`ml-2 px-2 py-1 rounded text-xs font-medium ${
+                  className={`ml-2 px-3 py-1 rounded-full text-sm font-medium ${
                     user.plan === "free"
-                      ? "bg-gray-100 text-gray-800"
+                      ? "bg-gray-700 text-gray-300"
                       : user.plan === "premium"
-                      ? "bg-blue-100 text-blue-800"
-                      : "bg-purple-100 text-purple-800"
+                      ? "bg-blue-600 text-white"
+                      : "bg-purple-600 text-white"
                   }`}
                 >
                   {user.plan.charAt(0).toUpperCase() + user.plan.slice(1)}
@@ -69,14 +71,15 @@ const page = async () => {
               {user.stripeSubscriptionId && (
                 <>
                   <p>
-                    <strong>Subscription ID:</strong>{" "}
-                    {user.stripeSubscriptionId}
+                    <strong>Subscription ID:</strong> {user.stripeSubscriptionId}
                   </p>
                   <p>
                     <strong>Current Period End:</strong>{" "}
                     {formatDate(user.stripeCurrentPeriodEnd)}
                   </p>
-                  <ManageSubscriptionButton />
+                  <div className="mt-4">
+                    <ManageSubscriptionButton />
+                  </div>
                 </>
               )}
             </div>
@@ -84,7 +87,7 @@ const page = async () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default page
+export default Page;

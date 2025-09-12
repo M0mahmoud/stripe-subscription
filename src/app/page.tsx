@@ -1,34 +1,40 @@
-import Link from "next/link"
+import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <div className="text-center sm:text-left">
-          <h1 className="text-3xl font-bold mb-4">Next.js Authentication</h1>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white">
+      <main className="flex flex-col items-center justify-center flex-1 px-4 text-center">
+        <h1 className="text-6xl font-bold">
+          Welcome to{" "}
+          <span className="text-blue-600">Stripe Subscription</span>
+        </h1>
 
-          <div className="flex gap-4 items-center flex-col sm:flex-row">
-            <Link
-              className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-blue-600 text-white gap-2 hover:bg-blue-700 font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-              href="/signup"
-            >
-              Sign Up
-            </Link>
-            <Link
-              className="rounded-full border border-solid border-gray-300 transition-colors flex items-center justify-center hover:bg-gray-50 font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto"
-              href="/signin"
-            >
-              Sign In
-            </Link>
-            <Link
-              className="rounded-full border border-solid border-green-300 transition-colors flex items-center justify-center bg-green-600 text-white gap-2 hover:bg-green-700 font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto"
-              href="/dashboard"
-            >
-              Dashboard
-            </Link>
-          </div>
+        <p className="mt-3 text-2xl">
+          Get started by exploring our pricing plans and features.
+        </p>
+
+        <div className="flex flex-wrap items-center justify-around max-w-4xl mt-6 sm:w-full">
+          <Link
+            href="/pricing"
+            className="p-6 mt-6 text-left border w-96 rounded-xl hover:text-blue-600 focus:text-blue-600"
+          >
+            <h3 className="text-2xl font-bold">Pricing &rarr;</h3>
+            <p className="mt-4 text-xl">
+              Find the perfect plan for your needs.
+            </p>
+          </Link>
+
+          <Link
+            href="/premium"
+            className="p-6 mt-6 text-left border w-96 rounded-xl hover:text-blue-600 focus:text-blue-600"
+          >
+            <h3 className="text-2xl font-bold">Premium Features &rarr;</h3>
+            <p className="mt-4 text-xl">
+              Unlock exclusive content and features.
+            </p>
+          </Link>
         </div>
       </main>
     </div>
-  )
+  );
 }
