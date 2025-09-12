@@ -1,4 +1,3 @@
-
 "use client";
 import { useRouter } from "next/navigation";
 import React from "react";
@@ -64,7 +63,9 @@ const PricingCards: React.FC<PricingCardsProps> = ({
         >
           <div>
             <h2 className="text-2xl font-bold mb-4 text-white">{tier.name}</h2>
-            <p className="text-4xl font-extrabold mb-6 text-white">{tier.price}</p>
+            <p className="text-4xl font-extrabold mb-6 text-white">
+              {tier.price}
+            </p>
             <ul className="mb-6 space-y-3 text-gray-300">
               {tier.features.map((feature, idx) => (
                 <li key={idx} className="flex items-center">
@@ -76,7 +77,7 @@ const PricingCards: React.FC<PricingCardsProps> = ({
           </div>
           <button
             onClick={() => handleSubscripe(tier.priceId!)}
-            className="w-full py-3 mt-6 rounded-lg font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors duration-300 disabled:opacity-50"
+            className="w-full py-3 mt-6 rounded-lg font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors duration-300 disabled:opacity-50 cursor-pointer"
           >
             {tier.buttonText}
           </button>
@@ -87,4 +88,3 @@ const PricingCards: React.FC<PricingCardsProps> = ({
 };
 
 export default PricingCards;
-
