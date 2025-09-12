@@ -4,7 +4,7 @@ import { getSession, hashPassword, verifyPassword } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
 
-export async function SignInAction(_: any, formData: FormData) {
+export async function SignInAction(_arg: unknown, formData: FormData) {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
 
@@ -29,16 +29,21 @@ export async function SignInAction(_: any, formData: FormData) {
     session.role = user.role;
     session.isLoggedIn = true;
     await session.save();
-  } catch (error: Error | any) {
+  } catch (error: unknown) {
+    const message =
+      typeof error === "object" && error !== null && "message" in error
+      ? (error as { message?: unknown }).message
+        : String(error);
+
     return {
       success: false,
-      message: error?.message || "An error occurred during sign in.",
+      message: typeof message === "string" ? message : "An error occurred during sign in.",
     };
   }
   redirect("/dashboard");
 }
 
-export async function SignUpAction(_: any, formData: FormData) {
+export async function SignUpAction(_arg: unknown, formData: FormData) {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
 
@@ -75,10 +80,15 @@ export async function SignUpAction(_: any, formData: FormData) {
     session.role = "user";
     session.isLoggedIn = true;
     await session.save();
-  } catch (error: Error | any) {
+  } catch (error: unknown) {
+    const message =
+      typeof error === "object" && error !== null && "message" in error
+      ? (error as { message?: unknown }).message
+        : String(error);
+
     return {
       success: false,
-      message: error?.message || "An error occurred during sign up.",
+      message: typeof message === "string" ? message : "An error occurred during sign up.",
     };
   }
   redirect("/dashboard");

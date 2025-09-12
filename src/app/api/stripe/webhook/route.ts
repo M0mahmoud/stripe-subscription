@@ -1,5 +1,5 @@
 import { db } from "@/lib/db"
-import { stripe } from "@/lib/stripe"
+import { stripe, STRIPE_PRICE_IDS } from "@/lib/stripe"
 import { NextRequest, NextResponse } from "next/server"
 import Stripe from "stripe"
 
@@ -53,20 +53,43 @@ export async function POST(request: NextRequest) {
         })
 
         if (user) {
+          // Get the current price ID from the subscription
+          const currentPriceId = subscription.items.data[0]?.price?.id
+          let planType: "free" | "premium" | "pro" = "free"
+          
+          if (subscription.status === "active" && currentPriceId) {
+            // Map price ID to plan type dynamically
+            const priceIdMap = Object.entries(STRIPE_PRICE_IDS).find(
+              ([, priceId]) => priceId === currentPriceId
+            )
+            planType = (priceIdMap?.[0] as "premium" | "pro") || "free"
+          }
+
           await db.user.update({
             where: { id: user.id },
             data: {
               stripeCurrentPeriodEnd: new Date(
                 subscription.items.data[0].current_period_end * 1000
               ),
-              plan:
-                subscription.status === "active"
-                  ? user.stripePriceId === "premium"
-                    ? "premium"
-                    : "pro"
-                  : "free",
+              plan: planType,
             },
           })
+        }
+        break
+      }
+
+      case "invoice.payment_failed": {
+        const invoice = event.data.object as Stripe.Invoice
+        const customerId = invoice.customer as string
+
+        const user = await db.user.findFirst({
+          where: { stripeCustomerId: customerId },
+        })
+
+        if (user) {
+          // You might want to send an email notification here
+          console.log(`Payment failed for user ${user.id}`)
+          // Optionally update user status or send notification
         }
         break
       }

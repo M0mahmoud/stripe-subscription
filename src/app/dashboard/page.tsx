@@ -13,6 +13,7 @@ const Page = async () => {
   }
 
   const user = await db.user.findUnique({ where: { id: session.userId } });
+  console.log("🚀 ~ Page ~ user:", user);
 
   if (!user) {
     redirect("/signin");

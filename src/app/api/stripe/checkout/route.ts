@@ -5,6 +5,15 @@ import { NextRequest, NextResponse } from "next/server"
 
 export async function POST(request: NextRequest) {
   try {
+    // Validate required environment variables
+    if (!process.env.NEXT_PUBLIC_APP_URL) {
+      console.error("NEXT_PUBLIC_APP_URL is not set")
+      return NextResponse.json(
+        { error: "Server configuration error" },
+        { status: 500 }
+      )
+    }
+
     const session = await getSession()
 
     if (!session || !session.isLoggedIn || !session.userId) {
@@ -24,6 +33,14 @@ export async function POST(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 })
+    }
+
+    // Check if user already has an active subscription
+    if (user.stripeSubscriptionId && user.plan !== "free") {
+      return NextResponse.json(
+        { error: "User already has an active subscription" },
+        { status: 400 }
+      )
     }
 
     let customerId = user.stripeCustomerId
