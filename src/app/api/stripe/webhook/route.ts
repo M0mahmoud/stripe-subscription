@@ -30,6 +30,10 @@ export async function POST(request: NextRequest) {
             session.subscription as string
           );
 
+          const plan = (Object.keys(STRIPE_PRICE_IDS) as Array<keyof typeof STRIPE_PRICE_IDS>).find(
+            (key) => STRIPE_PRICE_IDS[key] === priceId
+          );
+
           await db.user.update({
             where: { id: userId },
             data: {
@@ -38,7 +42,7 @@ export async function POST(request: NextRequest) {
               stripeCurrentPeriodEnd: new Date(
                 subscription.items.data[0].current_period_end * 1000
               ),
-              plan: priceId === "premium" ? "premium" : "pro",
+              plan: plan || "free",
             },
           });
         }
@@ -98,7 +102,8 @@ export async function POST(request: NextRequest) {
         const invoice = event.data.object as Stripe.Invoice;
         const customerId = invoice.customer as string;
         // Access subscription safely - it exists on Invoice but not in the type definition
-        const subscriptionId = (invoice as unknown as { subscription?: string }).subscription;
+        const subscriptionId = (invoice as unknown as { subscription?: string })
+          .subscription;
 
         console.log(`💰 Payment succeeded for subscription: ${subscriptionId}`);
 
