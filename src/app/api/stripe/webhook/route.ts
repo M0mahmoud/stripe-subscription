@@ -94,6 +94,70 @@ export async function POST(request: NextRequest) {
         break;
       }
 
+      case "invoice.payment_succeeded": {
+        const invoice = event.data.object as Stripe.Invoice;
+        const customerId = invoice.customer as string;
+        const subscriptionId = (invoice as any).subscription;
+
+        console.log(`💰 Payment succeeded for subscription: ${subscriptionId}`);
+
+        if (subscriptionId && typeof subscriptionId === "string") {
+          const subscription = await stripe.subscriptions.retrieve(
+            subscriptionId
+          );
+          const user = await db.user.findFirst({
+            where: { stripeCustomerId: customerId },
+          });
+
+          if (user && subscription) {
+            const currentPriceId = subscription.items.data[0]?.price?.id;
+            let planType: "free" | "premium" | "pro" = "free";
+
+            if (subscription.status === "active" && currentPriceId) {
+              const priceIdMap = Object.entries(STRIPE_PRICE_IDS).find(
+                ([, priceId]) => priceId === currentPriceId
+              );
+              planType = (priceIdMap?.[0] as "premium" | "pro") || "free";
+            }
+
+            console.log(
+              `🔄 Auto-renewal successful for user ${user.id} - ${planType} plan`
+            );
+
+            await db.user.update({
+              where: { id: user.id },
+              data: {
+                stripeCurrentPeriodEnd: new Date(
+                  subscription.items.data[0].current_period_end * 1000
+                ),
+                plan: planType,
+              },
+            });
+          }
+        }
+        break;
+      }
+
+      case "customer.subscription.trial_will_end": {
+        const subscription = event.data.object as Stripe.Subscription;
+        const customerId = subscription.customer as string;
+
+        console.log(
+          `⏰ Trial ending soon for subscription: ${subscription.id}`
+        );
+
+        const user = await db.user.findFirst({
+          where: { stripeCustomerId: customerId },
+        });
+
+        if (user) {
+          console.log(`📧 Trial ending in 3 days for user ${user.id}`);
+          // Trial will end in 3 days - Stripe will send email if enabled
+          // You can add custom logic here if needed
+        }
+        break;
+      }
+
       case "customer.subscription.deleted": {
         const subscription = event.data.object as Stripe.Subscription;
         const customerId = subscription.customer as string;

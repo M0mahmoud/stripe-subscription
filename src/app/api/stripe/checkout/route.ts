@@ -89,15 +89,6 @@ export async function POST(request: NextRequest) {
           userId: user.id,
         },
       },
-      // Enable automatic invoice collection and email sending
-      invoice_creation: {
-        enabled: true,
-        invoice_data: {
-          metadata: {
-            userId: user.id,
-          },
-        },
-      },
       // Configure customer update to ensure email preferences
       customer_update: {
         address: "auto",
