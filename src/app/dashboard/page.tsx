@@ -71,7 +71,8 @@ const Page = async () => {
               {user.stripeSubscriptionId && (
                 <>
                   <p>
-                    <strong>Subscription ID:</strong> {user.stripeSubscriptionId}
+                    <strong>Subscription ID:</strong>{" "}
+                    {user.stripeSubscriptionId}
                   </p>
                   <p>
                     <strong>Current Period End:</strong>{" "}
