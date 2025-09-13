@@ -98,7 +98,8 @@ export async function POST(request: NextRequest) {
         const invoice = event.data.object as Stripe.Invoice;
         const customerId = invoice.customer as string;
         // Access subscription safely - it exists on Invoice but not in the type definition
-        const subscriptionId = (invoice as unknown as { subscription?: string }).subscription;
+        const subscriptionId = (invoice as unknown as { subscription?: string })
+          .subscription;
 
         console.log(`💰 Payment succeeded for subscription: ${subscriptionId}`);
 

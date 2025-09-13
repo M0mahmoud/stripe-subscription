@@ -69,6 +69,12 @@ const Page = async () => {
                   {user.plan.charAt(0).toUpperCase() + user.plan.slice(1)}
                 </span>
               </p>
+              {user.plan === "free" && user.stripeSubscriptionId && user.stripeCurrentPeriodEnd && user.stripeCurrentPeriodEnd > new Date() && (
+                <div className="bg-yellow-500 text-black p-4 rounded-lg mt-4">
+                  <p className="font-bold">Your subscription has been canceled.</p>
+                  <p>Your plan will be active until {formatDate(user.stripeCurrentPeriodEnd)}.</p>
+                </div>
+              )}
               {user.stripeSubscriptionId && (
                 <>
                   <p>
