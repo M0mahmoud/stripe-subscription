@@ -38,9 +38,15 @@ export async function POST(request: NextRequest) {
     // Check if user already has an active subscription
     if (user.stripeSubscriptionId && user.plan !== "free") {
       // If the subscription is canceled, but the period is not over
-      if (user.stripeCurrentPeriodEnd && user.stripeCurrentPeriodEnd > new Date()) {
+      if (
+        user.stripeCurrentPeriodEnd &&
+        user.stripeCurrentPeriodEnd > new Date()
+      ) {
         return NextResponse.json(
-          { error: "You have a canceled subscription. Please wait for the current period to end before subscribing again." },
+          {
+            error:
+              "You have a canceled subscription. Please wait for the current period to end before subscribing again.",
+          },
           { status: 400 }
         );
       }
@@ -61,10 +67,6 @@ export async function POST(request: NextRequest) {
         },
         // Ensure customer can receive emails
         preferred_locales: ["en"],
-        // Enable tax ID collection if needed
-        address: {
-          country: "US", // Default country - you may want to make this configurable
-        },
       });
       customerId = customer.id;
 

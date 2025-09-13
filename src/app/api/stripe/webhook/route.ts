@@ -38,6 +38,7 @@ export async function POST(request: NextRequest) {
             where: { id: userId },
             data: {
               stripeSubscriptionId: subscription.id,
+              stripeCustomerId: subscription.customer as string,
               stripePriceId: priceId,
               stripeCurrentPeriodEnd: new Date(
                 subscription.items.data[0].current_period_end * 1000
