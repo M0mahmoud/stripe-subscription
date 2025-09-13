@@ -20,6 +20,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // If the subscription is canceled, but the period is not over
+    if (user.plan === "free" && user.stripeSubscriptionId && user.stripeCurrentPeriodEnd && user.stripeCurrentPeriodEnd > new Date()) {
+      return NextResponse.json(
+        { error: "You have a canceled subscription. Please wait for the current period to end before managing your subscription." },
+        { status: 400 }
+      );
+    }
+
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: user.stripeCustomerId,
       return_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`,

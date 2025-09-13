@@ -37,6 +37,13 @@ export async function POST(request: NextRequest) {
 
     // Check if user already has an active subscription
     if (user.stripeSubscriptionId && user.plan !== "free") {
+      // If the subscription is canceled, but the period is not over
+      if (user.stripeCurrentPeriodEnd && user.stripeCurrentPeriodEnd > new Date()) {
+        return NextResponse.json(
+          { error: "You have a canceled subscription. Please wait for the current period to end before subscribing again." },
+          { status: 400 }
+        );
+      }
       return NextResponse.json(
         { error: "User already has an active subscription" },
         { status: 400 }

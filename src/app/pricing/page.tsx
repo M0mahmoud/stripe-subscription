@@ -57,6 +57,11 @@ const PricingPage = async () => {
   const hasActiveSubscription = Boolean(
     user.stripeSubscriptionId && user.plan !== null && user.plan !== "free"
   );
+
+  const hasCanceledSubscription = Boolean(
+    user.stripeSubscriptionId && user.plan === "free" && user.stripeCurrentPeriodEnd && user.stripeCurrentPeriodEnd > new Date()
+  );
+
   // Fetch Stripe prices for each tier that has a priceId configured
   const tiers = await Promise.all(
     baseTiers.map(async (t) => {
@@ -100,6 +105,12 @@ const PricingPage = async () => {
   return (
     <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center py-12 px-4">
       <h1 className="text-4xl font-bold mb-8">Our Pricing Plans</h1>
+      {hasCanceledSubscription && (
+        <div className="bg-yellow-500 text-black p-4 rounded-lg mb-8">
+          <p className="font-bold">Your subscription has been canceled.</p>
+          <p>Your plan will be active until {new Date(user.stripeCurrentPeriodEnd!).toLocaleDateString()}.</p>
+        </div>
+      )}
       <PricingCards
         tiers={tiers}
         userPlan={user.plan}
