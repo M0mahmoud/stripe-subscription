@@ -30,15 +30,20 @@ export async function POST(request: NextRequest) {
             session.subscription as string
           );
 
+          const plan = (Object.keys(STRIPE_PRICE_IDS) as Array<keyof typeof STRIPE_PRICE_IDS>).find(
+            (key) => STRIPE_PRICE_IDS[key] === priceId
+          );
+
           await db.user.update({
             where: { id: userId },
             data: {
               stripeSubscriptionId: subscription.id,
+              stripeCustomerId: subscription.customer as string,
               stripePriceId: priceId,
               stripeCurrentPeriodEnd: new Date(
                 subscription.items.data[0].current_period_end * 1000
               ),
-              plan: priceId === "premium" ? "premium" : "pro",
+              plan: plan || "free",
             },
           });
         }
